@@ -35,7 +35,14 @@ vi.mock("../agents/model-auth.js", () => ({
   requireApiKey: vi.fn((auth: { apiKey?: string }) => auth.apiKey ?? ""),
 }));
 
-const { _test, resolveTtsConfig, maybeApplyTtsToPayload, getTtsProvider } = tts;
+const {
+  _test,
+  resolveTtsConfig,
+  maybeApplyTtsToPayload,
+  getTtsProvider,
+  TTS_PROVIDERS,
+  isTtsProviderConfigured,
+} = tts;
 
 const {
   isValidVoiceId,
@@ -556,6 +563,76 @@ describe("tts", () => {
 
       globalThis.fetch = originalFetch;
       process.env.OPENCLAW_TTS_PREFS = prevPrefs;
+    });
+  });
+
+  describe("CLI TTS provider", () => {
+    it("includes cli in TTS_PROVIDERS", () => {
+      expect(TTS_PROVIDERS).toContain("cli");
+    });
+
+    it("resolves CLI config correctly", () => {
+      const cfg = {
+        agents: { defaults: { model: { primary: "openai/gpt-4o-mini" } } },
+        messages: {
+          tts: {
+            provider: "cli" as const,
+            cli: {
+              command: "chatterbox-tts",
+              args: ["speak", "{{text}}", "--voice", "priyanka", "--output", "{{output}}"],
+              outputFormat: "wav",
+              timeoutMs: 30000,
+            },
+          },
+        },
+      };
+
+      const config = resolveTtsConfig(cfg);
+      expect(config.provider).toBe("cli");
+      expect(config.cli).toEqual({
+        command: "chatterbox-tts",
+        args: ["speak", "{{text}}", "--voice", "priyanka", "--output", "{{output}}"],
+        outputFormat: "wav",
+        voice: undefined,
+        timeoutMs: 30000,
+      });
+    });
+
+    it("resolves CLI config as null when not configured", () => {
+      const cfg = {
+        agents: { defaults: { model: { primary: "openai/gpt-4o-mini" } } },
+        messages: { tts: {} },
+      };
+
+      const config = resolveTtsConfig(cfg);
+      expect(config.cli).toBeNull();
+    });
+
+    it("isTtsProviderConfigured returns true for cli when configured", () => {
+      const config = resolveTtsConfig({
+        agents: { defaults: { model: { primary: "openai/gpt-4o-mini" } } },
+        messages: {
+          tts: {
+            provider: "cli" as const,
+            cli: {
+              command: "chatterbox-tts",
+              args: ["speak", "{{text}}", "--output", "{{output}}"],
+              outputFormat: "wav",
+            },
+          },
+        },
+      });
+
+      expect(isTtsProviderConfigured(config, "cli")).toBe(true);
+    });
+
+    it("isTtsProviderConfigured returns false for cli when not configured", () => {
+      const config = resolveTtsConfig({
+        agents: { defaults: { model: { primary: "openai/gpt-4o-mini" } } },
+        messages: { tts: {} },
+      });
+
+      expect(isTtsProviderConfigured(config, "cli")).toBe(false);
     });
   });
 });
