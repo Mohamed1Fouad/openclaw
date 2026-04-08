@@ -1,5 +1,6 @@
 import { completeSimple, type TextContent } from "@mariozechner/pi-ai";
 import { EdgeTTS } from "node-edge-tts";
+import { spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -122,6 +123,13 @@ export type ResolvedTtsConfig = {
     proxy?: string;
     timeoutMs?: number;
   };
+  cli: {
+    command: string;
+    args: string[];
+    outputFormat: string;
+    voice?: string;
+    timeoutMs: number;
+  } | null;
   prefsPath?: string;
   maxTextLength: number;
   timeoutMs: number;
@@ -296,6 +304,15 @@ export function resolveTtsConfig(cfg: OpenClawConfig): ResolvedTtsConfig {
       proxy: raw.edge?.proxy?.trim() || undefined,
       timeoutMs: raw.edge?.timeoutMs,
     },
+    cli: raw.cli?.command
+      ? {
+          command: raw.cli.command,
+          args: raw.cli.args ?? [],
+          outputFormat: raw.cli.outputFormat ?? "wav",
+          voice: raw.cli.voice,
+          timeoutMs: raw.cli.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+        }
+      : null,
     prefsPath: raw.prefsPath,
     maxTextLength: raw.maxTextLength ?? DEFAULT_MAX_TEXT_LENGTH,
     timeoutMs: raw.timeoutMs ?? DEFAULT_TIMEOUT_MS,
@@ -501,7 +518,7 @@ export function resolveTtsApiKey(
   return undefined;
 }
 
-export const TTS_PROVIDERS = ["openai", "elevenlabs", "edge"] as const;
+export const TTS_PROVIDERS = ["openai", "elevenlabs", "edge", "cli"] as const;
 
 export function resolveTtsProviderOrder(primary: TtsProvider): TtsProvider[] {
   return [primary, ...TTS_PROVIDERS.filter((provider) => provider !== primary)];
@@ -510,6 +527,9 @@ export function resolveTtsProviderOrder(primary: TtsProvider): TtsProvider[] {
 export function isTtsProviderConfigured(config: ResolvedTtsConfig, provider: TtsProvider): boolean {
   if (provider === "edge") {
     return config.edge.enabled;
+  }
+  if (provider === "cli") {
+    return config.cli !== null;
   }
   return Boolean(resolveTtsApiKey(config, provider));
 }
@@ -1158,6 +1178,55 @@ async function edgeTTS(params: {
   await tts.ttsPromise(text, outputPath);
 }
 
+/**
+ * CLI-based TTS: runs any CLI tool (e.g., chatterbox-tts, sherpa-onnx-tts).
+ *
+ * Placeholders in args:
+ *   {{text}}     — input text (required)
+ *   {{output}}   — output file path (required)
+ *   {{voice}}    — voice name/path (optional)
+ *
+ * Example config:
+ *   {
+ *     "tts": {
+ *       "provider": "cli",
+ *       "cli": {
+ *         "command": "chatterbox-tts",
+ *         "args": ["speak", "{{text}}", "--voice", "priyanka", "--output", "{{output}}"],
+ *         "outputFormat": "wav",
+ *         "timeoutMs": 30000
+ *       }
+ *     }
+ *   }
+ */
+async function cliTTS(params: {
+  text: string;
+  outputPath: string;
+  config: ResolvedTtsConfig["cli"];
+}): Promise<void> {
+  const { text, outputPath, config } = params;
+
+  // Build args with placeholder substitution
+  const resolvedArgs = config.args.map((arg) =>
+    arg
+      .replace(/\{\{text\}\}/g, text)
+      .replace(/\{\{output\}\}/g, outputPath)
+      .replace(/\{\{voice\}\}/g, config.voice ?? ""),
+  );
+
+  const result = spawnSync(config.command, resolvedArgs, {
+    timeout: config.timeoutMs,
+    encoding: "utf8",
+  });
+
+  if (result.error || result.status !== 0) {
+    const stderr = result.stderr?.trim() ?? "";
+    throw new Error(
+      `CLI TTS failed${stderr ? `: ${stderr}` : " (exit " + result.status + ")"}`,
+    );
+  }
+}
+
 export async function textToSpeech(params: {
   text: string;
   cfg: OpenClawConfig;
@@ -1251,6 +1320,49 @@ export async function textToSpeech(params: {
           latencyMs: Date.now() - providerStart,
           provider,
           outputFormat: edgeResult.outputFormat,
+          voiceCompatible,
+        };
+      }
+
+      if (provider === "cli") {
+        if (!config.cli) {
+          lastError = "cli: not configured";
+          continue;
+        }
+
+        const tempDir = mkdtempSync(path.join(tmpdir(), "tts-"));
+        const extension =
+          config.cli.outputFormat === "mp3"
+            ? ".mp3"
+            : config.cli.outputFormat === "opus"
+              ? ".opus"
+              : ".wav";
+        const audioPath = path.join(tempDir, `voice-${Date.now()}${extension}`);
+
+        try {
+          await cliTTS({
+            text: params.text,
+            outputPath: audioPath,
+            config: config.cli,
+          });
+        } catch (err) {
+          try {
+            rmSync(tempDir, { recursive: true, force: true });
+          } catch {
+            // ignore cleanup errors
+          }
+          throw err;
+        }
+
+        scheduleCleanup(tempDir);
+        const voiceCompatible = isVoiceCompatibleAudio({ fileName: audioPath });
+
+        return {
+          success: true,
+          audioPath,
+          latencyMs: Date.now() - providerStart,
+          provider,
+          outputFormat: config.cli.outputFormat,
           voiceCompatible,
         };
       }
