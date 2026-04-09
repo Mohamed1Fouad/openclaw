@@ -39,6 +39,7 @@ export const ttsHandlers: GatewayRequestHandlers = {
         hasOpenAIKey: Boolean(resolveTtsApiKey(config, "openai")),
         hasElevenLabsKey: Boolean(resolveTtsApiKey(config, "elevenlabs")),
         edgeEnabled: isTtsProviderConfigured(config, "edge"),
+        cliConfigured: isTtsProviderConfigured(config, "cli"),
       });
     } catch (err) {
       respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, formatForLog(err)));
@@ -145,6 +146,12 @@ export const ttsHandlers: GatewayRequestHandlers = {
             id: "edge",
             name: "Edge TTS",
             configured: isTtsProviderConfigured(config, "edge"),
+            models: [],
+          },
+          {
+            id: "cli",
+            name: "CLI",
+            configured: isTtsProviderConfigured(config, "cli"),
             models: [],
           },
         ],

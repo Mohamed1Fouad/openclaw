@@ -1205,6 +1205,9 @@ async function cliTTS(params: {
   config: ResolvedTtsConfig["cli"];
 }): Promise<void> {
   const { text, outputPath, config } = params;
+  if (!config) {
+    throw new Error("CLI TTS provider is not configured");
+  }
 
   // Build args with placeholder substitution
   const resolvedArgs = config.args.map((arg) =>
@@ -1221,9 +1224,7 @@ async function cliTTS(params: {
 
   if (result.error || result.status !== 0) {
     const stderr = result.stderr?.trim() ?? "";
-    throw new Error(
-      `CLI TTS failed${stderr ? `: ${stderr}` : " (exit " + result.status + ")"}`,
-    );
+    throw new Error(`CLI TTS failed${stderr ? `: ${stderr}` : " (exit " + result.status + ")"}`);
   }
 }
 

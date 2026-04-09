@@ -9,7 +9,7 @@ title: "Text-to-Speech"
 
 # Text-to-speech (TTS)
 
-OpenClaw can convert outbound replies into audio using ElevenLabs, OpenAI, or Edge TTS.
+OpenClaw can convert outbound replies into audio using ElevenLabs, OpenAI, Edge TTS, or a custom CLI command.
 It works anywhere OpenClaw can send audio; Telegram gets a round voice-note bubble.
 
 ## Supported services
@@ -17,6 +17,7 @@ It works anywhere OpenClaw can send audio; Telegram gets a round voice-note bubb
 - **ElevenLabs** (primary or fallback provider)
 - **OpenAI** (primary or fallback provider; also used for summaries)
 - **Edge TTS** (primary or fallback provider; uses `node-edge-tts`, default when no API keys)
+- **CLI** (run any local TTS command, e.g. a self-hosted voice cloning model)
 
 ### Edge TTS notes
 
@@ -138,6 +139,37 @@ Full schema is in [Gateway configuration](/gateway/configuration).
 }
 ```
 
+### CLI TTS provider (local command)
+
+Run any local executable for TTS. Use `{{text}}` and `{{output}}` placeholders in args.
+Optionally set `{{voice}}` to substitute the configured voice name.
+
+```json5
+{
+  messages: {
+    tts: {
+      auto: "always",
+      provider: "cli",
+      cli: {
+        command: "/path/to/tts-binary",
+        args: ["speak", "{{text}}", "--voice", "{{voice}}", "--output", "{{output}}"],
+        voice: "my-cloned-voice",
+        timeoutMs: 120000,
+      },
+    },
+  },
+}
+```
+
+#### CLI config fields
+
+- `command`: path to the TTS executable.
+- `args`: array of arguments. Placeholders `{{text}}`, `{{output}}`, and `{{voice}}` are replaced at runtime.
+- `voice`: voice name passed via `{{voice}}` placeholder (optional).
+- `timeoutMs`: max time (ms) to wait for the command (default: 120000).
+
+The command must write a WAV file to the `{{output}}` path and exit 0 on success.
+
 ### Disable Edge TTS
 
 ```json5
@@ -204,9 +236,10 @@ Then run:
   - `tagged` only sends audio when the reply includes `[[tts]]` tags.
 - `enabled`: legacy toggle (doctor migrates this to `auto`).
 - `mode`: `"final"` (default) or `"all"` (includes tool/block replies).
-- `provider`: `"elevenlabs"`, `"openai"`, or `"edge"` (fallback is automatic).
+- `provider`: `"elevenlabs"`, `"openai"`, `"edge"`, or `"cli"` (fallback is automatic).
 - If `provider` is **unset**, OpenClaw prefers `openai` (if key), then `elevenlabs` (if key),
   otherwise `edge`.
+- `cli`: CLI provider config object (see below).
 - `summaryModel`: optional cheap model for auto-summary; defaults to `agents.defaults.model.primary`.
   - Accepts `provider/model` or a configured model alias.
 - `modelOverrides`: allow the model to emit TTS directives (on by default).
@@ -253,7 +286,7 @@ Here you go.
 
 Available directive keys (when enabled):
 
-- `provider` (`openai` | `elevenlabs` | `edge`)
+- `provider` (`openai` | `elevenlabs` | `edge` | `cli`)
 - `voice` (OpenAI voice) or `voiceId` (ElevenLabs)
 - `model` (OpenAI TTS model or ElevenLabs model id)
 - `stability`, `similarityBoost`, `style`, `speed`, `useSpeakerBoost`
@@ -365,6 +398,7 @@ Discord note: `/tts` is a built-in Discord command, so OpenClaw registers
 /tts tagged
 /tts status
 /tts provider openai
+/tts provider cli
 /tts limit 2000
 /tts summary off
 /tts audio Hello from OpenClaw
