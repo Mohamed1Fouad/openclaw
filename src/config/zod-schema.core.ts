@@ -462,11 +462,7 @@ export const MarkdownConfigSchema = z
   .strict()
   .optional();
 
-<<<<<<< HEAD
-export const TtsProviderSchema = z.string().min(1);
-=======
 export const TtsProviderSchema = z.enum(["elevenlabs", "openai", "edge", "cli"]);
->>>>>>> de00295238bc77575123842f3972c48e65e0aeef
 export const TtsModeSchema = z.enum(["final", "all"]);
 export const TtsAutoSchema = z.enum(["off", "always", "inbound", "tagged"]);
 const TtsProviderConfigSchema = z
@@ -503,9 +499,7 @@ export const TtsConfigSchema = z
       })
       .strict()
       .optional(),
-<<<<<<< HEAD
-    providers: z.record(z.string(), TtsProviderConfigSchema).optional(),
-=======
+
     elevenlabs: z
       .object({
         apiKey: z.string().optional(),
@@ -561,7 +555,6 @@ export const TtsConfigSchema = z
       })
       .strict()
       .optional(),
->>>>>>> de00295238bc77575123842f3972c48e65e0aeef
     prefsPath: z.string().optional(),
     maxTextLength: z.number().int().min(1).optional(),
     timeoutMs: z.number().int().min(1000).max(120000).optional(),
