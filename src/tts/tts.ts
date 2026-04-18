@@ -1,39 +1,3 @@
-<<<<<<< HEAD
-export {
-  _test,
-  buildTtsSystemPromptHint,
-  getLastTtsAttempt,
-  getResolvedSpeechProviderConfig,
-  getTtsMaxLength,
-  getTtsProvider,
-  isSummarizationEnabled,
-  isTtsEnabled,
-  isTtsProviderConfigured,
-  listSpeechVoices,
-  maybeApplyTtsToPayload,
-  resolveExplicitTtsOverrides,
-  resolveTtsAutoMode,
-  resolveTtsConfig,
-  resolveTtsPrefsPath,
-  resolveTtsProviderOrder,
-  setLastTtsAttempt,
-  setSummarizationEnabled,
-  setTtsAutoMode,
-  setTtsEnabled,
-  setTtsMaxLength,
-  setTtsProvider,
-  synthesizeSpeech,
-  textToSpeech,
-  textToSpeechTelephony,
-  type ResolvedTtsConfig,
-  type ResolvedTtsModelOverrides,
-  type TtsDirectiveOverrides,
-  type TtsDirectiveParseResult,
-  type TtsResult,
-  type TtsSynthesisResult,
-  type TtsTelephonyResult,
-} from "../plugin-sdk/tts-runtime.js";
-=======
 import { completeSimple, type TextContent } from "@mariozechner/pi-ai";
 import { EdgeTTS } from "node-edge-tts";
 import { spawnSync } from "node:child_process";
@@ -1726,4 +1690,3 @@ export const _test = {
   resolveOutputFormat,
   resolveEdgeOutputFormat,
 };
->>>>>>> de00295238bc77575123842f3972c48e65e0aeef
