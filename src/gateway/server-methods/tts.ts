@@ -9,7 +9,7 @@ import {
   getResolvedSpeechProviderConfig,
   getTtsProvider,
   isTtsEnabled,
-  isTtsProviderConfigured,
+  isTtsProviderConfigured,npm run build
   resolveExplicitTtsOverrides,
   resolveTtsAutoMode,
   resolveTtsConfig,
@@ -50,14 +50,10 @@ export const ttsHandlers: GatewayRequestHandlers = {
         fallbackProvider: fallbackProviders[0] ?? null,
         fallbackProviders,
         prefsPath,
-<<<<<<< HEAD
-        providerStates,
-=======
         hasOpenAIKey: Boolean(resolveTtsApiKey(config, "openai")),
         hasElevenLabsKey: Boolean(resolveTtsApiKey(config, "elevenlabs")),
         edgeEnabled: isTtsProviderConfigured(config, "edge"),
         cliConfigured: isTtsProviderConfigured(config, "cli"),
->>>>>>> de00295238bc77575123842f3972c48e65e0aeef
       });
     } catch (err) {
       respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, formatForLog(err)));
@@ -170,19 +166,6 @@ export const ttsHandlers: GatewayRequestHandlers = {
       const config = resolveTtsConfig(cfg);
       const prefsPath = resolveTtsPrefsPath(config);
       respond(true, {
-<<<<<<< HEAD
-        providers: listSpeechProviders(cfg).map((provider) => ({
-          id: provider.id,
-          name: provider.label,
-          configured: provider.isConfigured({
-            cfg,
-            providerConfig: getResolvedSpeechProviderConfig(config, provider.id, cfg),
-            timeoutMs: config.timeoutMs,
-          }),
-          models: [...(provider.models ?? [])],
-          voices: [...(provider.voices ?? [])],
-        })),
-=======
         providers: [
           {
             id: "openai",
@@ -210,7 +193,6 @@ export const ttsHandlers: GatewayRequestHandlers = {
             models: [],
           },
         ],
->>>>>>> de00295238bc77575123842f3972c48e65e0aeef
         active: getTtsProvider(config, prefsPath),
       });
     } catch (err) {
