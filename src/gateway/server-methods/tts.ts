@@ -9,7 +9,7 @@ import {
   getResolvedSpeechProviderConfig,
   getTtsProvider,
   isTtsEnabled,
-  isTtsProviderConfigured,npm run build
+  isTtsProviderConfigured,
   resolveExplicitTtsOverrides,
   resolveTtsAutoMode,
   resolveTtsConfig,
