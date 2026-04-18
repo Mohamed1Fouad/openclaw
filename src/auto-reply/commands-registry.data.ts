@@ -30,12 +30,6 @@ let cachedNativeRegistryVersion = -1;
 
 function buildChatCommands(): ChatCommandDefinition[] {
   const commands: ChatCommandDefinition[] = [
-<<<<<<< HEAD
-    ...buildBuiltinChatCommands(),
-    ...listLoadedChannelPlugins()
-      .filter(supportsNativeCommands)
-      .map((plugin) => defineDockCommand(plugin)),
-=======
     defineChatCommand({
       key: "help",
       nativeName: "help",
@@ -481,7 +475,6 @@ function buildChatCommands(): ChatCommandDefinition[] {
     ...listChannelDocks()
       .filter((dock) => dock.capabilities.nativeCommands)
       .map((dock) => defineDockCommand(dock)),
->>>>>>> de00295238bc77575123842f3972c48e65e0aeef
   ];
 
   assertCommandRegistry(commands);
