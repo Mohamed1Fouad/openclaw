@@ -718,7 +718,11 @@ export async function runHeartbeatOnce(opts: {
   if (!isHeartbeatEnabledForAgent(cfg, agentId)) {
     return { status: "skipped", reason: "disabled" };
   }
-  if (!resolveHeartbeatIntervalMs(cfg, undefined, heartbeat)) {
+  // Explicit wakes (cron, exec-event, etc.) bypass the interval check.
+  // The interval setting controls periodic heartbeat frequency, not
+  // whether on-demand heartbeats can run.
+  const isExplicitWake = opts.reason && opts.reason !== "interval";
+  if (!resolveHeartbeatIntervalMs(cfg, undefined, heartbeat) && !isExplicitWake) {
     return { status: "skipped", reason: "disabled" };
   }
 
@@ -1399,17 +1403,26 @@ export function startHeartbeatRunner(opts: {
         reason: "disabled",
       } satisfies HeartbeatRunResult;
     }
-    if (state.agents.size === 0) {
-      return {
-        status: "skipped",
-        reason: "disabled",
-      } satisfies HeartbeatRunResult;
-    }
-
     const reason = params?.reason;
     const requestedAgentId = params?.agentId ? normalizeAgentId(params.agentId) : undefined;
     const requestedSessionKey = normalizeOptionalString(params?.sessionKey);
     const isInterval = reason === "interval";
+
+    if (state.agents.size === 0) {
+      if (isInterval) {
+        return {
+          status: "skipped",
+          reason: "disabled",
+        } satisfies HeartbeatRunResult;
+      }
+      // Explicit wake (cron, exec-event, etc.) with no periodic agents.
+      // Run once for the default agent to process pending system events.
+      return await runOnce({
+        cfg: state.cfg,
+        reason,
+        deps: { runtime: state.runtime },
+      });
+    }
     const startedAt = Date.now();
     const now = startedAt;
     let ran = false;
