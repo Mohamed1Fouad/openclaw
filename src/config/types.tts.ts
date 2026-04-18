@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-export type TtsProvider = string;
-=======
 export type TtsProvider = "elevenlabs" | "openai" | "edge" | "cli";
->>>>>>> de00295238bc77575123842f3972c48e65e0aeef
 
 export type TtsMode = "final" | "all";
 
@@ -42,10 +38,6 @@ export type TtsConfig = {
   summaryModel?: string;
   /** Allow the model to override TTS parameters. */
   modelOverrides?: TtsModelOverrideConfig;
-<<<<<<< HEAD
-  /** Provider-specific TTS settings keyed by speech provider id. */
-  providers?: TtsProviderConfigMap;
-=======
   /** ElevenLabs configuration. */
   elevenlabs?: {
     apiKey?: string;
@@ -96,7 +88,6 @@ export type TtsConfig = {
     /** Timeout in ms. */
     timeoutMs?: number;
   };
->>>>>>> de00295238bc77575123842f3972c48e65e0aeef
   /** Optional path for local TTS user preferences JSON. */
   prefsPath?: string;
   /** Hard cap for text sent to TTS (chars). */
