@@ -50,7 +50,14 @@ export const ttsHandlers: GatewayRequestHandlers = {
         fallbackProvider: fallbackProviders[0] ?? null,
         fallbackProviders,
         prefsPath,
+<<<<<<< HEAD
         providerStates,
+=======
+        hasOpenAIKey: Boolean(resolveTtsApiKey(config, "openai")),
+        hasElevenLabsKey: Boolean(resolveTtsApiKey(config, "elevenlabs")),
+        edgeEnabled: isTtsProviderConfigured(config, "edge"),
+        cliConfigured: isTtsProviderConfigured(config, "cli"),
+>>>>>>> de00295238bc77575123842f3972c48e65e0aeef
       });
     } catch (err) {
       respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, formatForLog(err)));
@@ -163,6 +170,7 @@ export const ttsHandlers: GatewayRequestHandlers = {
       const config = resolveTtsConfig(cfg);
       const prefsPath = resolveTtsPrefsPath(config);
       respond(true, {
+<<<<<<< HEAD
         providers: listSpeechProviders(cfg).map((provider) => ({
           id: provider.id,
           name: provider.label,
@@ -174,6 +182,35 @@ export const ttsHandlers: GatewayRequestHandlers = {
           models: [...(provider.models ?? [])],
           voices: [...(provider.voices ?? [])],
         })),
+=======
+        providers: [
+          {
+            id: "openai",
+            name: "OpenAI",
+            configured: Boolean(resolveTtsApiKey(config, "openai")),
+            models: [...OPENAI_TTS_MODELS],
+            voices: [...OPENAI_TTS_VOICES],
+          },
+          {
+            id: "elevenlabs",
+            name: "ElevenLabs",
+            configured: Boolean(resolveTtsApiKey(config, "elevenlabs")),
+            models: ["eleven_multilingual_v2", "eleven_turbo_v2_5", "eleven_monolingual_v1"],
+          },
+          {
+            id: "edge",
+            name: "Edge TTS",
+            configured: isTtsProviderConfigured(config, "edge"),
+            models: [],
+          },
+          {
+            id: "cli",
+            name: "CLI",
+            configured: isTtsProviderConfigured(config, "cli"),
+            models: [],
+          },
+        ],
+>>>>>>> de00295238bc77575123842f3972c48e65e0aeef
         active: getTtsProvider(config, prefsPath),
       });
     } catch (err) {

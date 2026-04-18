@@ -191,13 +191,21 @@ export const handleTtsCommands: CommandHandler = async (params, allowTextCommand
   if (action === "provider") {
     const currentProvider = getTtsProvider(config, prefsPath);
     if (!args.trim()) {
+<<<<<<< HEAD
       const providers = listSpeechProviders(params.cfg);
+=======
+      const hasOpenAI = Boolean(resolveTtsApiKey(config, "openai"));
+      const hasElevenLabs = Boolean(resolveTtsApiKey(config, "elevenlabs"));
+      const hasEdge = isTtsProviderConfigured(config, "edge");
+      const hasCli = isTtsProviderConfigured(config, "cli");
+>>>>>>> de00295238bc77575123842f3972c48e65e0aeef
       return {
         shouldContinue: false,
         reply: {
           text:
             `🎙️ TTS provider\n` +
             `Primary: ${currentProvider}\n` +
+<<<<<<< HEAD
             providers
               .map(
                 (provider) =>
@@ -217,13 +225,30 @@ export const handleTtsCommands: CommandHandler = async (params, allowTextCommand
               )
               .join("\n") +
             `\nUsage: /tts provider <id>`,
+=======
+            `OpenAI key: ${hasOpenAI ? "✅" : "❌"}\n` +
+            `ElevenLabs key: ${hasElevenLabs ? "✅" : "❌"}\n` +
+            `Edge enabled: ${hasEdge ? "✅" : "❌"}\n` +
+            `CLI configured: ${hasCli ? "✅" : "❌"}\n` +
+            `Usage: /tts provider openai | elevenlabs | edge | cli`,
+>>>>>>> de00295238bc77575123842f3972c48e65e0aeef
         },
       };
     }
 
+<<<<<<< HEAD
     const requested = normalizeOptionalLowercaseString(args) ?? "";
     const resolvedProvider = getSpeechProvider(requested, params.cfg);
     if (!resolvedProvider) {
+=======
+    const requested = args.trim().toLowerCase();
+    if (
+      requested !== "openai" &&
+      requested !== "elevenlabs" &&
+      requested !== "edge" &&
+      requested !== "cli"
+    ) {
+>>>>>>> de00295238bc77575123842f3972c48e65e0aeef
       return { shouldContinue: false, reply: ttsUsage() };
     }
 
